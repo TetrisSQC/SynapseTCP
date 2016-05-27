@@ -164,17 +164,7 @@ type
 
   end;
 
-implementation uses FMX.DialogService, System.UITypes;
-
-procedure Log(const Line: string);
-begin
-  TDialogService.MessageDialog(Line, TMsgDlgType.mtInformation,
-    [TMsgDlgBtn.mbOK], TMsgDlgBtn.mbOK, 0,
-    procedure(const AResult: TModalResult)
-    begin
-    end);
-end;
-
+implementation
 
 constructor TRTSPSend.Create;
 begin
