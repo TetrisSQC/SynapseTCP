@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<BorlandProject>
+	<Transactions>
+    <Transaction>1899.12.30 00:00:00.000.215,\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.fmx=C:\1\Examples\Test\UMain.fmx</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.418,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.391,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.215,\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas=C:\1\Examples\Test\UMain.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.877,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.865,\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Project1.dproj=C:\1\Examples\Test\Test.dproj</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.947,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.857,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit1.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.013,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.270,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.707,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.961,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.575,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.348,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.643,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.790,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+    <Transaction>1899.12.30 00:00:00.000.068,=\\Mac\Home\Documents\Embarcadero\Studio\Projekte\Unit2.pas</Transaction>
+  </Transactions>
+	<ActiveMobileDevice>
+		<PiMac iOSSimulator="_iossimulator_664AABB0-CA51-43FD-8B99-07506548420C" iOSDevice64="_iosdevice_cc40e9b36fd568db93350eebb7c01b67b3018359" iOSDevice32="_iosdevice_cc40e9b36fd568db93350eebb7c01b67b3018359"/>
+		<NoProfile Android="H2G6R14523000487"/>
+		<PMac iOSSimulator="iPhone5" iOSDevice64="_iosdevice_449879d49d95ab204061a24528fb318cde266922" iOSDevice32="_iosdevice_449879d49d95ab204061a24528fb318cde266922"/>
+	</ActiveMobileDevice>
+</BorlandProject>
