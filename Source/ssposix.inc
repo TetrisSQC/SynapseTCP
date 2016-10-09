@@ -70,7 +70,7 @@ interface
 uses
   SyncObjs, SysUtils, Classes, synabyte,
   Posix.SysSocket, Posix.SysSelect, Posix.SysTime, Posix.NetinetIn,
-  Posix.StrOpts, Posix.Errno;
+  Posix.StrOpts, Posix.Errno, Posix.Signal;
 
 function InitSocketInterface(stack: string): Boolean;
 function DestroySocketInterface: Boolean;
@@ -1094,7 +1094,7 @@ function InitSocketInterface(stack: string): Boolean;
 begin
   SockEnhancedApi := True;
   SockWship6Api := False;
-//  Libc.Signal(Libc.SIGPIPE, TSignalHandler(Libc.SIG_IGN));
+  Signal(SIGPIPE, TSignalHandler(SIG_IGN));
   Result := True;
 end;
 

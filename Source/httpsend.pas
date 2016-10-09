@@ -69,7 +69,7 @@ interface
 
 uses
   SysUtils, Classes,
-  blcksock, synautil, synaip, synacode, synsock;
+  blcksock, synautil, synabyte, synaip, synacode, synsock;
 
 const
   cHttpProtocol = '80';
@@ -691,7 +691,7 @@ end;
 
 function THTTPSend.ReadUnknown: Boolean;
 var
-  s: string;
+  s: TSynaBytes;
 begin
   Result := false;
   repeat
