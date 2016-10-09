@@ -1598,7 +1598,8 @@ end;
 {$IFNDEF CIL}
 function IncPoint(const p: pbyte; Value: integer): pointer;
 begin
-  Result := p + Value;
+  Result := p;
+  inc(pbyte(Result), Value);
 end;
 {$ENDIF}
 

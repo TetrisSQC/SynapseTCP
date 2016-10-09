@@ -103,7 +103,7 @@ function ReverseIP6(Value: String): String;
 function ExpandIP6(Value: String): String;
 
 
-implementation
+implementation uses synabyte;
 
 {==============================================================================}
 

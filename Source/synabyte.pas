@@ -45,8 +45,8 @@
 
 {:@abstract(NextGen and Unicode buffer layer)}
 
-
 unit synabyte;
+{$i jedi.inc}
 
 interface
 uses
@@ -97,6 +97,12 @@ type
 {$ELSE}
   TSynaBytes = AnsiString;
   TSynaByte = AnsiChar;
+{$ENDIF}
+
+{$IFNDEF DELPHI12_UP}
+  TBytes = Array of Byte;
+
+  function CharInSet(C: Char; const CharSet: TSysCharSet): Boolean;
 {$ENDIF}
 
   function StringOf(const bytes: TSynaBytes):string; overload;
@@ -273,6 +279,7 @@ begin
 end;
 
 function StringOf(const by: TBytes):string;
+{$IFDEF UNICODE}
 var
   I: Integer;
   C: PWord;
@@ -287,7 +294,13 @@ begin
       Inc(C);
     end;
   end;
+{$ELSE}
+begin
+  SetLength(Result, Length(by));
+  move(by[0],result[1], Length(by));
+{$ENDIF}
 end;
+
 procedure DeleteInternal (var s: TSynaBytes; Start, Count: Integer);
 begin
 {$IFDEF UNICODE}
@@ -296,5 +309,12 @@ begin
   Delete(s, Start , Count);
 {$ENDIF}
 end;
-     
+
+{$IFNDEF DELPHI12_UP}
+function CharInSet(C: Char; const CharSet: TSysCharSet): Boolean;
+begin
+  Result := C in CharSet;
+end;
+{$ENDIF}
+
 end.
