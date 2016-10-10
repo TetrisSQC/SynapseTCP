@@ -96,6 +96,7 @@ Core with implementation basic socket classes.
   {$WARN IMPLICIT_STRING_CAST_LOSS OFF}
 {$ENDIF}
 
+{$i jedi.inc}
 unit blcksock;
 
 interface
@@ -2271,8 +2272,8 @@ begin
         for n := 0 to l do
           Buffer[rl + n] := b[n];
 {$ELSE}
-//     Move(Pointer(s)^, IncPoint(Buffer, rl)^, l);
-    Move(s.Bytes[0], IncPoint(Buffer, rl)^, l);
+    Move({$IFNDEF UNICODE}Pointer(s)^{$ELSE}s.Bytes[0]{$ENDIF},
+     IncPoint(Buffer, rl)^, l);
 {$ENDIF}
         rl := rl + l;
         if FLastError <> 0 then
