@@ -106,7 +106,9 @@ type
 {$ENDIF}
 
   function StringOf(const bytes: TSynaBytes):string; overload;
-  function StringOf(const by: TBytes):string; overload;
+  function StringOf(const bytes: TBytes):string; overload;
+  function StringOf(const bytes: PByte): String; overload;
+
   procedure DeleteInternal (var s: TSynaBytes; Start, Count: Integer);
 
 implementation
@@ -278,26 +280,59 @@ begin
   Result := bytes;
 end;
 
-function StringOf(const by: TBytes):string;
+function StringOf(const bytes: TBytes):string;
 {$IFDEF UNICODE}
 var
   I: Integer;
   C: PWord;
 begin
-  SetLength(Result, Length(by));
-  if Length(by) > 0 then
+  SetLength(Result, Length(bytes));
+  if Length(bytes) > 0 then
   begin
     C := PWord(PWideChar(Result));
-    for I := 0 to Length(by)-1 do
+    for I := 0 to Length(bytes)-1 do
     begin
-      C^ := by[I];
+      C^ := bytes[I];
       Inc(C);
     end;
   end;
 {$ELSE}
 begin
-  SetLength(Result, Length(by));
-  move(by[0],result[1], Length(by));
+  SetLength(Result, Length(bytes));
+  move(bytes[0],result[1], Length(bytes));
+{$ENDIF}
+end;
+
+function StringOf(const bytes: PByte):string;
+var
+  count: Integer;
+  buf: PByte;
+{$IFDEF UNICODE}
+  I: Integer;
+  C: PWord;
+{$ENDIF}
+begin
+  Count := 0;
+  buf := bytes;
+  while buf^<>0 do
+  begin
+   inc(count);
+   inc(buf);
+  end;
+{$IFDEF UNICODE}
+  SetLength(Result, count);
+  if count > 0 then
+  begin
+    C := PWord(PWideChar(Result));
+    for I := 0 to count-1 do
+    begin
+      C^ := bytes[I];
+      Inc(C);
+    end;
+  end;
+{$ELSE}
+  SetLength(Result, count);
+  move(bytes^, result[1], count);
 {$ENDIF}
 end;
 

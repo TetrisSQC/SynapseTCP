@@ -773,7 +773,8 @@ begin
   try
     Result := HTTP.HTTPMethod('GET', URL);
     if Result then
-      Response.LoadFromStream(HTTP.Document);
+      Response.LoadFromStream(HTTP.Document
+       {$IFDEF UNICODE}, TEncoding.ANSI{$ENDIF});
   finally
     HTTP.Free;
   end;

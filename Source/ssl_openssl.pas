@@ -96,7 +96,7 @@ uses
 {$IFDEF CIL}
   System.Text,
 {$ENDIF}
-  ssl_openssl_lib;
+  synabyte, ssl_openssl_lib;
 
 type
   {:@abstract(class implementing OpenSSL SSL plugin.)
@@ -111,7 +111,7 @@ type
     function Init(server:Boolean): Boolean;
     function DeInit: Boolean;
     function Prepare(server:Boolean): Boolean;
-    function LoadPFX(pfxdata: ansistring): Boolean;
+    function LoadPFX(pfxdata: TSynabytes): Boolean;
     function CreateSelfSignedCert(Host: string): Boolean; override;
   public
     {:See @inherited}
@@ -166,17 +166,27 @@ implementation
 {==============================================================================}
 
 {$IFNDEF CIL}
-function PasswordCallback(buf:PAnsiChar; size:Integer; rwflag:Integer; userdata: Pointer):Integer; cdecl;
+function PasswordCallback(buf:PByte; size:Integer; rwflag:Integer; userdata: Pointer):Integer; cdecl;
 var
-  Password: AnsiString;
+  Password: TSynabytes;
 begin
   Password := '';
   if TCustomSSL(userdata) is TCustomSSL then
     Password := TCustomSSL(userdata).KeyPassword;
   if Length(Password) > (Size - 1) then
+  {$IFDEF UNICODE}
+   Password.Length := Size - 1;
+  {$ELSE}
     SetLength(Password, Size - 1);
+  {$ENDIF}
   Result := Length(Password);
-  StrLCopy(buf, PAnsiChar(Password + #0), Result + 1);
+  Password := Password + #0;
+            
+{$IFDEF UNICODE}
+  move(Password.Data^, buf^, result+1);
+{$ELSE}
+  move(PAnsiChar(AnsiString(Password))^, buf^, result+1);
+{$ENDIF}
 end;
 {$ENDIF}
 
@@ -211,7 +221,7 @@ var
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
-  s : AnsiString;
+  s : TSynabytes;
 begin
   Result := true;
   FLastErrorDesc := '';
@@ -241,7 +251,7 @@ var
   name: PX509_NAME;
   b: PBIO;
   xn, y: integer;
-  s: AnsiString;
+  s: TBytes;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -283,14 +293,14 @@ begin
       end;
 {$ELSE}
       setlength(s, xn);
-      y := bioread(b, s, xn);
+      y := bioread(b, @s[0], xn);
       if y > 0 then
         setlength(s, y);
 {$ENDIF}
     finally
       BioFreeAll(b);
     end;
-    FCertificate := s;
+    FCertificate := StringOf(s);
     b := BioNew(BioSMem);
     try
       i2dPrivatekeyBio(b, pk);
@@ -305,30 +315,39 @@ begin
       end;
 {$ELSE}
       setlength(s, xn);
-      y := bioread(b, s, xn);
+      y := bioread(b, @s[0], xn);
       if y > 0 then
         setlength(s, y);
 {$ENDIF}
     finally
       BioFreeAll(b);
     end;
-    FPrivatekey := s;
+    FPrivatekey := StringOf(s);
   finally
     X509free(x);
     EvpPkeyFree(pk);
   end;
 end;
 
-function TSSLOpenSSL.LoadPFX(pfxdata: Ansistring): Boolean;
+function TSSLOpenSSL.LoadPFX(pfxdata: TSynabytes): Boolean;
 var
   cert, pkey, ca: SslPtr;
   b: PBIO;
   p12: SslPtr;
+  buf: PByte;
+  len: cardinal;
 begin
   Result := False;
   b := BioNew(BioSMem);
   try
-    BioWrite(b, pfxdata, Length(PfxData));
+{$IFDEF UNICODE}
+    buf := pfxdata.Data;
+    len := pfxdata.Length;
+{$ELSE}
+    buf := PByte(pfxData);
+    len := length(pfxData);
+{$ENDIF}
+    BioWrite(b, buf, len);
     p12 := d2iPKCS12bio(b, nil);
     if not Assigned(p12) then
       Exit;
@@ -413,7 +432,8 @@ end;
 
 function TSSLOpenSSL.Init(server:Boolean): Boolean;
 var
-  s: AnsiString;
+  s: TSynabytes;
+  buf: PByte;
 begin
   Result := False;
   FLastErrorDesc := '';
@@ -439,7 +459,12 @@ begin
   else
   begin
     s := FCiphers;
-    SslCtxSetCipherList(Fctx, s);
+  {$IFDEF UNICODE}
+    buf := s.Data;
+  {$ELSE}
+    buf := PByte(s);
+  {$ENDIF}
+    SslCtxSetCipherList(Fctx, buf);
     if FVerifyCert then
       SslCtxSetVerify(FCtx, SSL_VERIFY_PEER, nil)
     else
@@ -501,6 +526,8 @@ var
   x: integer;
   b: boolean;
   err: integer;
+  s: TSynabytes;
+  buf: PByte;
 begin
   Result := False;
   if FSocket.Socket = INVALID_SOCKET then
@@ -517,7 +544,15 @@ begin
       Exit;
     end;
     if SNIHost<>'' then
-      SSLCtrl(Fssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, PAnsiChar(AnsiString(SNIHost)));
+    begin
+      s := sniHost;
+    {$IFDEF  UNICODE}
+      buf := s.Data;
+    {$ELSE}
+      buf := PByte(s);
+    {$ENDIF}
+      SSLCtrl(Fssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, buf);
+    end;
     if FSocket.ConnectionTimeout <= 0 then //do blocking call of SSL_Connect
     begin
       x := sslconnect(FSsl);
@@ -685,7 +720,7 @@ end;
 function TSSLOpenSSL.GetPeerSubject: string;
 var
   cert: PX509;
-  s: ansistring;
+  s: TBytes;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -706,7 +741,7 @@ begin
   Result := X509NameOneline(X509GetSubjectName(cert), sb, 4096);
 {$ELSE}
   setlength(s, 4096);
-  Result := X509NameOneline(X509GetSubjectName(cert), s, Length(s));
+  Result := X509NameOneline(X509GetSubjectName(cert), @s[0], Length(s));
 {$ENDIF}
   X509Free(cert);
 end;
@@ -738,7 +773,7 @@ end;
 
 function TSSLOpenSSL.GetPeerName: string;
 var
-  s: ansistring;
+  s: string;
 begin
   s := GetPeerSubject;
   s := SeparateRight(s, '/CN=');
@@ -770,7 +805,7 @@ end;
 function TSSLOpenSSL.GetPeerIssuer: string;
 var
   cert: PX509;
-  s: ansistring;
+  s: TBytes;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -791,7 +826,7 @@ begin
   Result := X509NameOneline(X509GetIssuerName(cert), sb, 4096);
 {$ELSE}
   setlength(s, 4096);
-  Result := X509NameOneline(X509GetIssuerName(cert), s, Length(s));
+  Result := X509NameOneline(X509GetIssuerName(cert), @s[0], Length(s));
 {$ENDIF}
   X509Free(cert);
 end;
@@ -833,7 +868,7 @@ var
   cert: PX509;
   x, y: integer;
   b: PBIO;
-  s: AnsiString;
+  s: TBytes;
 {$IFDEF CIL}
   sb: stringbuilder;
 {$ENDIF}
@@ -864,11 +899,11 @@ begin
       end;
   {$ELSE}
       setlength(s,x);
-      y := bioread(b,s,x);
+      y := bioread(b,@s[0],x);
       if y > 0 then
         setlength(s, y);
   {$ENDIF}
-      Result := ReplaceString(s, LF, CRLF);
+      Result := ReplaceString(stringof(s), LF, CRLF);
     finally
       BioFreeAll(b);
     end;
