@@ -72,15 +72,14 @@ unit synsock;
         {$I ssfpc.inc}
        {$ENDIF OS2}
       {$ELSE}
-        {$I sslinux.inc}
+        {$IFDEF POSIX}
+          {$I ssposix.inc} //experimental!
+        {$ELSE}
+          {$I sslinux.inc}
+        {$ENDIF}
       {$ENDIF}
     {$ENDIF}
   {$ENDIF}
 {$ENDIF}
-{$IFDEF POSIX}
-//Posix.SysSocket
-   {$I ssposix.inc} //experimental!
-{$ENDIF}
-
 end.
 

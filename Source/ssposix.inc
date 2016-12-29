@@ -103,9 +103,12 @@ const
 {$IFDEF ANDROID}
   FIONREAD        = Posix.StrOpts.FIONREAD;
 {$ELSE}
-  FIONREAD = $4004667F;
+   {$IFDEF LINUX}
+     FIONREAD        = $541B;    //?????
+   {$ELSE}
+     FIONREAD = $4004667F;
+   {$ENDIF}
 {$ENDIF}
-
   FIONBIO	 = $8004667E; //OSX FIONBIO         = Posix.StrOpts.FIONBIO;
   FIOASYNC = $8004667D; //OSX  FIOASYNC        = Posix.StrOpts.FIOASYNC;  // not defined in XE2
 
@@ -224,11 +227,11 @@ Const
   IPV6_LEAVE_GROUP      = Posix.NetinetIn.IPV6_LEAVE_GROUP;
 
 const
-  SOCK_STREAM = 1; { stream socket }
-  SOCK_DGRAM = 2; { datagram socket }
-  SOCK_RAW = 3; { raw-protocol interface }
-  SOCK_RDM = 4; { reliably-delivered message }
-  SOCK_SEQPACKET = 5; { sequenced packet stream }
+  SOCK_STREAM     = 1;//Posix.SysSocket.SOCK_STREAM;// 1;               { stream socket }
+  SOCK_DGRAM      = 2;//Posix.SysSocket.SOCK_DGRAM;// 2;               { datagram socket }
+  SOCK_RAW        = 3;//Posix.SysSocket.SOCK_RAW;// 3;               { raw-protocol interface }
+  SOCK_RDM        = 4;//Posix.SysSocket.SOCK_RDM;// 4;               { reliably-delivered message }
+  SOCK_SEQPACKET  = 5;//Posix.SysSocket.SOCK_SEQPACKET;// 5;               { sequenced packet stream }
 
 { TCP options. }
   TCP_NODELAY     = $0001; //netinettcp.pas
@@ -238,8 +241,7 @@ const
   AF_UNSPEC       = Posix.SysSocket.AF_UNSPEC;// 0;               { unspecified }
   AF_INET         = Posix.SysSocket.AF_INET;  // 2;               { internetwork: UDP, TCP, etc. }
   AF_INET6        = Posix.SysSocket.AF_INET6; // !! 30            { Internetwork Version 6 }
-  AF_MAX = 24;
-//  AF_MAX          = Posix.SysSocket.AF_MAX;   // !! - variable by OS
+  AF_MAX          = Posix.SysSocket.AF_MAX;   // !! - variable by OS
 
 { Protocol families, same as address families for now. }
   PF_UNSPEC       = AF_UNSPEC;

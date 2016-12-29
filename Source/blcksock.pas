@@ -249,6 +249,7 @@ type
     LT_SSLv3,
     LT_TLSv1,
     LT_TLSv1_1,
+    LT_TLSv1_2,
     LT_SSHv2
     );
 
@@ -287,7 +288,6 @@ type
   TOptionList = TList;
   TSocketList = TList;
 {$ENDIF}
-
   {:@abstract(Basic IP object.)
    This is parent class for other class with protocol implementations. Do not
    use this class directly! Use @link(TICMPBlockSocket), @link(TRAWBlockSocket),
@@ -1526,7 +1526,6 @@ var
   WsaDataOnce: TWSADATA;
   e: ESynapseError;
 {$ENDIF}
-
 
 constructor TBlockSocket.Create;
 begin

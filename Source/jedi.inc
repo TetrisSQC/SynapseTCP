@@ -1,4 +1,4 @@
-{$IFNDEF JEDI_INC}
+﻿{$IFNDEF JEDI_INC}
 {$DEFINE JEDI_INC}
 
 {**************************************************************************************************}
@@ -517,7 +517,9 @@
 
 {$IFDEF BORLAND}
   {$IFDEF LINUX}
-    {$DEFINE KYLIX}
+    {$IFNDEF POSIX}
+      {$DEFINE KYLIX}
+    {$ENDIF}  
   {$ENDIF LINUX}
   {$IFNDEF CLR}
     {$IFNDEF CPUX86}
@@ -1430,6 +1432,4 @@
 {$IFDEF NEXTGEN}
   {$ZEROBASEDSTRINGS OFF}
 {$ENDIF}
-
-
 {$ENDIF ~JEDI_INC}
