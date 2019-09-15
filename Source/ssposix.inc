@@ -70,7 +70,7 @@ interface
 uses
   SyncObjs, SysUtils, Classes, synabyte,
   Posix.SysSocket, Posix.SysSelect, Posix.SysTime, Posix.NetinetIn,
-  Posix.StrOpts, Posix.Errno, Posix.Signal;
+  Posix.StrOpts, Posix.Errno;
 
 function InitSocketInterface(stack: string): Boolean;
 function DestroySocketInterface: Boolean;
@@ -103,12 +103,9 @@ const
 {$IFDEF ANDROID}
   FIONREAD        = Posix.StrOpts.FIONREAD;
 {$ELSE}
-   {$IFDEF LINUX}
-     FIONREAD        = $541B;    //?????
-   {$ELSE}
-     FIONREAD = $4004667F;
-   {$ENDIF}
+  FIONREAD = $4004667F;
 {$ENDIF}
+
   FIONBIO	 = $8004667E; //OSX FIONBIO         = Posix.StrOpts.FIONBIO;
   FIOASYNC = $8004667D; //OSX  FIOASYNC        = Posix.StrOpts.FIOASYNC;  // not defined in XE2
 
@@ -227,11 +224,11 @@ Const
   IPV6_LEAVE_GROUP      = Posix.NetinetIn.IPV6_LEAVE_GROUP;
 
 const
-  SOCK_STREAM     = 1;//Posix.SysSocket.SOCK_STREAM;// 1;               { stream socket }
-  SOCK_DGRAM      = 2;//Posix.SysSocket.SOCK_DGRAM;// 2;               { datagram socket }
-  SOCK_RAW        = 3;//Posix.SysSocket.SOCK_RAW;// 3;               { raw-protocol interface }
-  SOCK_RDM        = 4;//Posix.SysSocket.SOCK_RDM;// 4;               { reliably-delivered message }
-  SOCK_SEQPACKET  = 5;//Posix.SysSocket.SOCK_SEQPACKET;// 5;               { sequenced packet stream }
+  SOCK_STREAM = 1; { stream socket }
+  SOCK_DGRAM = 2; { datagram socket }
+  SOCK_RAW = 3; { raw-protocol interface }
+  SOCK_RDM = 4; { reliably-delivered message }
+  SOCK_SEQPACKET = 5; { sequenced packet stream }
 
 { TCP options. }
   TCP_NODELAY     = $0001; //netinettcp.pas
@@ -241,7 +238,8 @@ const
   AF_UNSPEC       = Posix.SysSocket.AF_UNSPEC;// 0;               { unspecified }
   AF_INET         = Posix.SysSocket.AF_INET;  // 2;               { internetwork: UDP, TCP, etc. }
   AF_INET6        = Posix.SysSocket.AF_INET6; // !! 30            { Internetwork Version 6 }
-  AF_MAX          = Posix.SysSocket.AF_MAX;   // !! - variable by OS
+  AF_MAX = 24;
+//  AF_MAX          = Posix.SysSocket.AF_MAX;   // !! - variable by OS
 
 { Protocol families, same as address families for now. }
   PF_UNSPEC       = AF_UNSPEC;
@@ -359,11 +357,10 @@ var
   SockWship6Api: Boolean;
 
 type
-  TVarSin = packed record
-  {$IF defined(MACOS32) OR defined(IOS))}
+ TVarSin = packed record
+  {$IF defined(MACOS32) OR defined(MACOS64) OR defined(IOS))}
      sin_len     : UInt8;
-  {$endif}
-
+  {$endif}  
     case integer of
       0: (AddressFamily: sa_family_t);
       1: (
@@ -1096,7 +1093,7 @@ function InitSocketInterface(stack: string): Boolean;
 begin
   SockEnhancedApi := True;
   SockWship6Api := False;
-  Signal(SIGPIPE, TSignalHandler(SIG_IGN));
+//  Libc.Signal(Libc.SIGPIPE, TSignalHandler(Libc.SIG_IGN));
   Result := True;
 end;
 
