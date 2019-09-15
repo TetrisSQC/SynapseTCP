@@ -3,7 +3,7 @@
 |==============================================================================|
 | Content: SSL support by OpenSSL                                              |
 |==============================================================================|
-| Copyright (c)1999-2012, Lukas Gebauer                                        |
+| Copyright (c)1999-2017, Lukas Gebauer                                        |
 | All rights reserved.                                                         |
 |                                                                              |
 | Redistribution and use in source and binary forms, with or without           |
@@ -33,7 +33,7 @@
 | DAMAGE.                                                                      |
 |==============================================================================|
 | The Initial Developer of the Original Code is Lukas Gebauer (Czech Republic).|
-| Portions created by Lukas Gebauer are Copyright (c)2005-2012.                |
+| Portions created by Lukas Gebauer are Copyright (c)2005-2017.                |
 | Portions created by Petr Fejfar are Copyright (c)2011-2012.                  |
 | All Rights Reserved.                                                         |
 |==============================================================================|
@@ -96,7 +96,7 @@ uses
 {$IFDEF CIL}
   System.Text,
 {$ENDIF}
-  synabyte, ssl_openssl_lib;
+  ssl_openssl_lib;
 
 type
   {:@abstract(class implementing OpenSSL SSL plugin.)
@@ -111,7 +111,7 @@ type
     function Init(server:Boolean): Boolean;
     function DeInit: Boolean;
     function Prepare(server:Boolean): Boolean;
-    function LoadPFX(pfxdata: TSynabytes): Boolean;
+    function LoadPFX(pfxdata: ansistring): Boolean;
     function CreateSelfSignedCert(Host: string): Boolean; override;
   public
     {:See @inherited}
@@ -166,27 +166,17 @@ implementation
 {==============================================================================}
 
 {$IFNDEF CIL}
-function PasswordCallback(buf:PByte; size:Integer; rwflag:Integer; userdata: Pointer):Integer; cdecl;
+function PasswordCallback(buf:PAnsiChar; size:Integer; rwflag:Integer; userdata: Pointer):Integer; cdecl;
 var
-  Password: TSynabytes;
+  Password: AnsiString;
 begin
   Password := '';
   if TCustomSSL(userdata) is TCustomSSL then
     Password := TCustomSSL(userdata).KeyPassword;
   if Length(Password) > (Size - 1) then
-  {$IFDEF UNICODE}
-   Password.Length := Size - 1;
-  {$ELSE}
     SetLength(Password, Size - 1);
-  {$ENDIF}
   Result := Length(Password);
-  Password := Password + #0;
-            
-{$IFDEF UNICODE}
-  move(Password.Data^, buf^, result+1);
-{$ELSE}
-  move(PAnsiChar(AnsiString(Password))^, buf^, result+1);
-{$ENDIF}
+  StrLCopy(buf, PAnsiChar(Password + #0), Result + 1);
 end;
 {$ENDIF}
 
@@ -196,8 +186,8 @@ constructor TSSLOpenSSL.Create(const Value: TTCPBlockSocket);
 begin
   inherited Create(Value);
   FCiphers := 'DEFAULT';
-  FSsl := nil;
-  Fctx := nil;
+  //FSsl := nil;
+  //Fctx := nil;
 end;
 
 destructor TSSLOpenSSL.Destroy;
@@ -221,7 +211,7 @@ var
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
-  s : TSynabytes;
+  s : AnsiString;
 begin
   Result := true;
   FLastErrorDesc := '';
@@ -251,7 +241,7 @@ var
   name: PX509_NAME;
   b: PBIO;
   xn, y: integer;
-  s: TBytes;
+  s: AnsiString;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -293,14 +283,14 @@ begin
       end;
 {$ELSE}
       setlength(s, xn);
-      y := bioread(b, @s[0], xn);
+      y := bioread(b, s, xn);
       if y > 0 then
         setlength(s, y);
 {$ENDIF}
     finally
       BioFreeAll(b);
     end;
-    FCertificate := StringOf(s);
+    FCertificate := s;
     b := BioNew(BioSMem);
     try
       i2dPrivatekeyBio(b, pk);
@@ -315,39 +305,30 @@ begin
       end;
 {$ELSE}
       setlength(s, xn);
-      y := bioread(b, @s[0], xn);
+      y := bioread(b, s, xn);
       if y > 0 then
         setlength(s, y);
 {$ENDIF}
     finally
       BioFreeAll(b);
     end;
-    FPrivatekey := StringOf(s);
+    FPrivatekey := s;
   finally
     X509free(x);
     EvpPkeyFree(pk);
   end;
 end;
 
-function TSSLOpenSSL.LoadPFX(pfxdata: TSynabytes): Boolean;
+function TSSLOpenSSL.LoadPFX(pfxdata: Ansistring): Boolean;
 var
   cert, pkey, ca: SslPtr;
   b: PBIO;
   p12: SslPtr;
-  buf: PByte;
-  len: cardinal;
 begin
   Result := False;
   b := BioNew(BioSMem);
   try
-{$IFDEF UNICODE}
-    buf := pfxdata.Data;
-    len := pfxdata.Length;
-{$ELSE}
-    buf := PByte(pfxData);
-    len := length(pfxData);
-{$ENDIF}
-    BioWrite(b, buf, len);
+    BioWrite(b, pfxdata, Length(PfxData));
     p12 := d2iPKCS12bio(b, nil);
     if not Assigned(p12) then
       Exit;
@@ -364,7 +345,7 @@ begin
       finally
         EvpPkeyFree(pkey);
         X509free(cert);
-        SkX509PopFree(ca,_X509Free); // for ca=nil a new STACK was allocated...
+        SkPopFree(ca,_X509Free); // for ca=nil a new STACK was allocated... //Griga: SkX509PopFree -> SkPopFree
       end;
       {/pf}
     finally
@@ -432,8 +413,7 @@ end;
 
 function TSSLOpenSSL.Init(server:Boolean): Boolean;
 var
-  s: TSynabytes;
-  buf: PByte;
+  s: AnsiString;
 begin
   Result := False;
   FLastErrorDesc := '';
@@ -459,12 +439,7 @@ begin
   else
   begin
     s := FCiphers;
-  {$IFDEF UNICODE}
-    buf := s.Data;
-  {$ELSE}
-    buf := PByte(s);
-  {$ENDIF}
-    SslCtxSetCipherList(Fctx, buf);
+    SslCtxSetCipherList(Fctx, s);
     if FVerifyCert then
       SslCtxSetVerify(FCtx, SSL_VERIFY_PEER, nil)
     else
@@ -526,8 +501,6 @@ var
   x: integer;
   b: boolean;
   err: integer;
-  s: TSynabytes;
-  buf: PByte;
 begin
   Result := False;
   if FSocket.Socket = INVALID_SOCKET then
@@ -544,15 +517,7 @@ begin
       Exit;
     end;
     if SNIHost<>'' then
-    begin
-      s := sniHost;
-    {$IFDEF  UNICODE}
-      buf := s.Data;
-    {$ELSE}
-      buf := PByte(s);
-    {$ENDIF}
-      SSLCtrl(Fssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, buf);
-    end;
+      SSLCtrl(Fssl, SSL_CTRL_SET_TLSEXT_HOSTNAME, TLSEXT_NAMETYPE_host_name, PAnsiChar(AnsiString(SNIHost)));
     if FSocket.ConnectionTimeout <= 0 then //do blocking call of SSL_Connect
     begin
       x := sslconnect(FSsl);
@@ -720,7 +685,7 @@ end;
 function TSSLOpenSSL.GetPeerSubject: string;
 var
   cert: PX509;
-  s: TBytes;
+  s: ansistring;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -741,7 +706,7 @@ begin
   Result := X509NameOneline(X509GetSubjectName(cert), sb, 4096);
 {$ELSE}
   setlength(s, 4096);
-  Result := X509NameOneline(X509GetSubjectName(cert), @s[0], Length(s));
+  Result := X509NameOneline(X509GetSubjectName(cert), s, Length(s));
 {$ENDIF}
   X509Free(cert);
 end;
@@ -773,7 +738,7 @@ end;
 
 function TSSLOpenSSL.GetPeerName: string;
 var
-  s: string;
+  s: ansistring;
 begin
   s := GetPeerSubject;
   s := SeparateRight(s, '/CN=');
@@ -805,7 +770,7 @@ end;
 function TSSLOpenSSL.GetPeerIssuer: string;
 var
   cert: PX509;
-  s: TBytes;
+  s: ansistring;
 {$IFDEF CIL}
   sb: StringBuilder;
 {$ENDIF}
@@ -826,7 +791,7 @@ begin
   Result := X509NameOneline(X509GetIssuerName(cert), sb, 4096);
 {$ELSE}
   setlength(s, 4096);
-  Result := X509NameOneline(X509GetIssuerName(cert), @s[0], Length(s));
+  Result := X509NameOneline(X509GetIssuerName(cert), s, Length(s));
 {$ENDIF}
   X509Free(cert);
 end;
@@ -857,6 +822,7 @@ begin
   Result := sb.ToString;
 {$ELSE}
   setlength(Result, EVP_MAX_MD_SIZE);
+  x := 0;
   X509Digest(cert, EvpGetDigestByName('MD5'), Result, x);
   SetLength(Result, x);
 {$ENDIF}
@@ -868,7 +834,7 @@ var
   cert: PX509;
   x, y: integer;
   b: PBIO;
-  s: TBytes;
+  s: AnsiString;
 {$IFDEF CIL}
   sb: stringbuilder;
 {$ENDIF}
@@ -899,11 +865,11 @@ begin
       end;
   {$ELSE}
       setlength(s,x);
-      y := bioread(b,@s[0],x);
+      y := bioread(b,s,x);
       if y > 0 then
         setlength(s, y);
   {$ENDIF}
-      Result := ReplaceString(stringof(s), LF, CRLF);
+      Result := ReplaceString(s, LF, CRLF);
     finally
       BioFreeAll(b);
     end;
@@ -926,6 +892,7 @@ function TSSLOpenSSL.GetCipherBits: integer;
 var
   x: integer;
 begin
+  x := 0;
   if not assigned(FSsl) then
     Result := 0
   else
